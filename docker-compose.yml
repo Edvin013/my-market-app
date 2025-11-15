@@ -1,0 +1,35 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: market-postgres
+    environment:
+      POSTGRES_DB: marketdb
+      POSTGRES_USER: market
+      POSTGRES_PASSWORD: market
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "market"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  app:
+    build: .
+    container_name: my-market-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/marketdb
+      SPRING_DATASOURCE_USERNAME: market
+      SPRING_DATASOURCE_PASSWORD: market
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+volumes:
+  pgdata:
+
